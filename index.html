@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIC-2: 50 Startups & Boston Housing 機器學習迴歸與特徵選取平台</title>
+  <meta name="description" content="DIC-2 作業平台：支援 50 Startups 與 Boston Housing 資料集之多元線性迴歸、5 種特徵選取方法效能評估 (RMSE & R²)，以及任意自訂 CSV 資料集分析。">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js & PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  
+  <!-- Header / Navigation Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-badge">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div class="brand-text">
+          <h1>DIC-2 ML Analytics Studio</h1>
+          <span class="sub-text">50 Startups & Boston Housing 迴歸與特徵選取</span>
+        </div>
+      </div>
+      
+      <div class="header-controls">
+        <!-- Bonus 1: Problem Dropdown -->
+        <div class="control-group">
+          <label for="problem-selector" class="control-label">
+            <i class="fa-solid fa-list-check"></i> 選擇題目 (Problem)
+            <span class="bonus-tag">+1分</span>
+          </label>
+          <div class="custom-select-wrapper">
+            <select id="problem-selector">
+              <option value="startups" selected>📊 Problem 1: 50 Startups (Profit 迴歸 & 5 種特徵選取)</option>
+              <option value="boston">🏡 Problem 2: Boston Housing (MEDV 房價迴歸與特徵重要性)</option>
+              <option value="custom">🌐 自訂資料集 (輸入任意 URL / 上傳 CSV)</option>
+            </select>
+            <i class="fa-solid fa-chevron-down select-arrow"></i>
+          </div>
+        </div>
+
+        <button id="theme-toggle" class="icon-btn" title="切換深淺模式">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+    
+    <!-- Bonus 2: Custom Dataset Input Bar (Always accessible, highlighted when custom is selected) -->
+    <section class="card dataset-bar-card" id="dataset-bar-section">
+      <div class="card-header">
+        <div class="header-left">
+          <span class="icon-pill"><i class="fa-solid fa-cloud-arrow-down"></i></span>
+          <div>
+            <h3>動態載入資料集 (Dynamic Dataset Loader)</h3>
+            <p class="section-desc">加總分 2 分：可輸入任意 CSV 網址（支援 GitHub Raw、Kaggle 鏡像等）或本地上傳</p>
+          </div>
+        </div>
+        <span class="bonus-badge"><i class="fa-solid fa-star"></i> 加總分 2 分功能</span>
+      </div>
+      
+      <div class="dataset-inputs-row">
+        <div class="url-input-container">
+          <i class="fa-solid fa-link input-icon"></i>
+          <input type="url" id="custom-dataset-url" 
+                 placeholder="輸入任意 CSV 網址，例如：https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv" 
+                 value="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv">
+          <button id="btn-load-url" class="btn btn-primary">
+            <i class="fa-solid fa-bolt"></i> 載入並分析
+          </button>
+        </div>
+        
+        <div class="divider-or"><span>OR</span></div>
+        
+        <div class="file-upload-container">
+          <label for="csv-file-input" class="btn btn-secondary file-upload-btn">
+            <i class="fa-solid fa-file-csv"></i> 選擇本機 CSV
+          </label>
+          <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+          <span id="file-name-display" class="file-status">未選擇檔案</span>
+        </div>
+      </div>
+
+      <!-- Quick sample datasets chips -->
+      <div class="quick-samples">
+        <span class="samples-title"><i class="fa-solid fa-lightbulb"></i> 快速填入範例：</span>
+        <button class="sample-chip active" data-type="startups">
+          <i class="fa-solid fa-building"></i> 50 Startups (GitHub Raw)
+        </button>
+        <button class="sample-chip" data-type="boston">
+          <i class="fa-solid fa-house"></i> Boston Housing (Housing Prices)
+        </button>
+      </div>
+    </section>
+
+    <!-- Problem Context Banner -->
+    <section class="problem-banner" id="problem-banner">
+      <div class="banner-badge" id="banner-badge">Problem 1</div>
+      <div class="banner-content">
+        <h2 id="banner-title">50_Startups 創投利潤預測與特徵選取優化</h2>
+        <p id="banner-desc">
+          本題目探討 5 種特徵選取方法（Lasso L1, Forward SFS, RFE, ElasticNet, Exhaustive Search）在 1 到 5 個特徵下的表現差異，尋求最精簡且預測能力最高（最低 RMSE 與最高 R²）的子集組合。
+        </p>
+      </div>
+      <div class="banner-stats" id="banner-stats">
+        <div class="mini-stat">
+          <span class="label">樣本數 (Rows)</span>
+          <span class="value" id="stat-rows">50</span>
+        </div>
+        <div class="mini-stat">
+          <span class="label">特徵數 (Features)</span>
+          <span class="value" id="stat-cols">5</span>
+        </div>
+        <div class="mini-stat">
+          <span class="label">目標變數 (Target)</span>
+          <span class="value highlight" id="stat-target">Profit</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs for Analytics -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-feature-selection">
+        <i class="fa-solid fa-chart-line"></i> 5 種特徵選取方法比較 (兩張圖)
+      </button>
+      <button class="tab-btn" data-tab="tab-model-perf">
+        <i class="fa-solid fa-gauge-high"></i> 迴歸模型評估指標 & 殘差
+      </button>
+      <button class="tab-btn" data-tab="tab-data-preview">
+        <i class="fa-solid fa-table"></i> 資料集瀏覽與特徵相關性
+      </button>
+      <button class="tab-btn" data-tab="tab-simulator">
+        <i class="fa-solid fa-sliders"></i> 即時預測模擬器 (Interactive Predictor)
+      </button>
+    </div>
+
+    <!-- TAB 1: 5 Feature Selection Methods (Core Assignment Requirement) -->
+    <section class="tab-content active" id="tab-feature-selection">
+      
+      <!-- Key Insights Summary Grid -->
+      <div class="insights-grid">
+        <div class="insight-card highlight-purple">
+          <div class="insight-icon"><i class="fa-solid fa-crown"></i></div>
+          <div class="insight-info">
+            <span class="card-caption">最佳特徵選取演算法</span>
+            <h4>Exhaustive Search (窮舉搜尋 - 紫線)</h4>
+            <p>遍歷所有特徵組合，在 2~4 個特徵時皆穩定保持全場最低 RMSE (~8180) 與最高 R² (>0.949)。</p>
+          </div>
+        </div>
+
+        <div class="insight-card highlight-green">
+          <div class="insight-icon"><i class="fa-solid fa-bullseye"></i></div>
+          <div class="insight-info">
+            <span class="card-caption">黃金最佳特徵數量</span>
+            <h4>2 到 3 個特徵 (Optimal k=2~3)</h4>
+            <p>RMSE 降至最低谷值（約 8180~8250），R² 達到峰值（~0.9504），兼具模型精簡與最高泛化力。</p>
+          </div>
+        </div>
+
+        <div class="insight-card highlight-red">
+          <div class="insight-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="insight-info">
+            <span class="card-caption">過度擬合警訊</span>
+            <h4>全特徵 (k=5) 效能劣化</h4>
+            <p>所有方法在納入全部 5 個特徵時，RMSE 攀升至最高 (~9210)，R² 跌至最低 (~0.9360)，印證過多特徵引入雜訊。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two Core Comparison Charts (Left: RMSE, Right: R^2) -->
+      <div class="charts-grid-two">
+        
+        <!-- Left Chart: RMSE -->
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h3><i class="fa-solid fa-chart-line text-primary"></i> 左圖：RMSE 比較 (Lower is Better)</h3>
+              <p class="chart-sub">RMSE Comparison across 5 Feature Selection Methods</p>
+            </div>
+            <div class="chart-tag min-best">越低越好 ▼</div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="rmseChart"></canvas>
+          </div>
+          <div class="chart-footer-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>特徵數在 <strong>2~3 個</strong> 時誤差最小；Exhaustive Search（紫線）在 2~4 個特徵下持續最優；RFE 與 ElasticNet 在 3 個特徵後急遽攀升。</span>
+          </div>
+        </div>
+
+        <!-- Right Chart: R^2 -->
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h3><i class="fa-solid fa-chart-area text-purple"></i> 右圖：R² 決定係數比較 (Higher is Better)</h3>
+              <p class="chart-sub">R-squared Comparison across 5 Feature Selection Methods</p>
+            </div>
+            <div class="chart-tag max-best">越高越好 ▲</div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="r2Chart"></canvas>
+          </div>
+          <div class="chart-footer-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>走勢與左圖完全鏡像對應；Exhaustive Search 在 2~4 個特徵時 R² 維持在 <strong>0.948 以上</strong>；5 個特徵時所有方法皆跌至最低點約 0.936。</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Methods Comparison Table -->
+      <div class="card table-card">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="icon-pill"><i class="fa-solid fa-table-list"></i></span>
+            <div>
+              <h3>5 種特徵選取方法詳細數值對照表</h3>
+              <p class="section-desc">不同特徵數量（k = 1 ~ 5）下各演算法所選出的子集評估表現</p>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="methods-summary-table">
+            <thead>
+              <tr>
+                <th>特徵選取方法 (Method)</th>
+                <th>特徵數 k=1 (RMSE / R²)</th>
+                <th>特徵數 k=2 (RMSE / R²)</th>
+                <th>特徵數 k=3 (RMSE / R²)</th>
+                <th>特徵數 k=4 (RMSE / R²)</th>
+                <th>全特徵 k=5 (RMSE / R²)</th>
+                <th>特徵選擇策略</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: Model Performance & Regression Diagnostics -->
+    <section class="tab-content" id="tab-model-perf">
+      
+      <!-- Metrics Dashboard -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-top">
+            <span class="metric-label">決定係數 (R²)</span>
+            <i class="fa-solid fa-chart-pie metric-icon"></i>
+          </div>
+          <div class="metric-value text-green" id="metric-r2">0.9504</div>
+          <div class="metric-desc">模型對目標變數變異的解釋比例</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-top">
+            <span class="metric-label">均方根誤差 (RMSE)</span>
+            <i class="fa-solid fa-wave-square metric-icon"></i>
+          </div>
+          <div class="metric-value text-blue" id="metric-rmse">8,180</div>
+          <div class="metric-desc">預測值與實際值之標準差</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-top">
+            <span class="metric-label">平均絕對誤差 (MAE)</span>
+            <i class="fa-solid fa-arrows-split-up-and-left metric-icon"></i>
+          </div>
+          <div class="metric-value text-purple" id="metric-mae">6,520</div>
+          <div class="metric-desc">平均單筆預測誤差絕對值</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-top">
+            <span class="metric-label">選取之最優特徵數</span>
+            <i class="fa-solid fa-cube metric-icon"></i>
+          </div>
+          <div class="metric-value text-orange" id="metric-k">2 個特徵</div>
+          <div class="metric-desc">R&D Spend + Marketing Spend</div>
+        </div>
+      </div>
+
+      <!-- Regression Scatter & Residual Plot -->
+      <div class="charts-grid-two">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h3><i class="fa-solid fa-crosshairs text-primary"></i> 實際值 vs 預測值擬合散佈圖 (Actual vs Predicted)</h3>
+              <p class="chart-sub">紅虛線為 45 度理想預測對角線（y = x）</p>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="predActualChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <h3><i class="fa-solid fa-arrows-to-dot text-orange"></i> 殘差分佈圖 (Residuals Plot)</h3>
+              <p class="chart-sub">檢驗誤差是否隨機且均勻分佈在 0 基準線周圍</p>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="residualsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Coefficients & Importance -->
+      <div class="card">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="icon-pill"><i class="fa-solid fa-scale-balanced"></i></span>
+            <div>
+              <h3>模型特徵迴歸係數與影響力分析 (Model Feature Weights)</h3>
+              <p class="section-desc">透過標準化與正規化檢視各特徵對目標變數的正負向貢獻度</p>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrapper" style="height: 280px;">
+          <canvas id="featureImportanceChart"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 3: Dataset Preview & Correlation -->
+    <section class="tab-content" id="tab-data-preview">
+      <div class="card table-card">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="icon-pill"><i class="fa-solid fa-database"></i></span>
+            <div>
+              <h3>當前資料集前 15 筆即時預覽 (Data Preview)</h3>
+              <p class="section-desc" id="dataset-preview-desc">50_Startups.csv 資料前處理後內容</p>
+            </div>
+          </div>
+          <button id="btn-export-csv" class="btn btn-secondary">
+            <i class="fa-solid fa-download"></i> 匯出當前資料
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="dataset-preview-table">
+            <thead>
+              <tr id="preview-thead-row"></tr>
+            </thead>
+            <tbody id="preview-tbody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: Real-time Simulator -->
+    <section class="tab-content" id="tab-simulator">
+      <div class="card">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="icon-pill"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+            <div>
+              <h3>即時預測模擬器 (Interactive Real-time Predictor)</h3>
+              <p class="section-desc">滑動或輸入特徵數值，即時推算迴歸模型預測結果</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="simulator-layout">
+          <div class="simulator-inputs" id="simulator-inputs-container">
+            <!-- Dynamic input sliders rendered by JS -->
+          </div>
+
+          <div class="simulator-result-box">
+            <span class="result-caption">預測目標值 (Predicted Output)</span>
+            <div class="result-amount" id="sim-predicted-value">$112,450.80</div>
+            <div class="result-target-label" id="sim-target-name">Profit (利潤預估)</div>
+            
+            <div class="result-formula-box">
+              <span class="formula-title"><i class="fa-solid fa-square-root-variable"></i> 當前模型線性方程式：</span>
+              <code id="sim-formula-code">y = 0.82 × (R&D Spend) + 0.03 × (Marketing Spend) + 49,000</code>
+            </div>
+
+            <button class="btn btn-primary" id="btn-reset-simulator" style="margin-top: 1.2rem; width: 100%;">
+              <i class="fa-solid fa-rotate-left"></i> 重設為平均值
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div>
+        <p><strong>DIC-2 Kaggle 50 Startup & Boston Housing Regression Benchmark</strong></p>
+        <span class="footer-sub">實作 5 種特徵選取方法評估、下拉選單多題目切換 (+1分)、任意資料集 URL 載入 (+2分)</span>
+      </div>
+      <div class="footer-badges">
+        <span class="f-badge"><i class="fa-solid fa-shield-halved"></i> Vercel Ready</span>
+        <span class="f-badge"><i class="fa-solid fa-code"></i> Pure Client-side OLS Matrix Engine</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

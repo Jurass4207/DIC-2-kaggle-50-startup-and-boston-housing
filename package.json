@@ -1,0 +1,19 @@
+{
+  "name": "dic-2-kaggle-50-startup-boston-housing",
+  "version": "1.0.0",
+  "description": "DIC-2 Kaggle 50 Startup & Boston Housing Feature Selection Comparison & Machine Learning Platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "machine-learning",
+    "regression",
+    "feature-selection",
+    "kaggle",
+    "50-startups",
+    "boston-housing"
+  ],
+  "author": "",
+  "license": "MIT"
+}
