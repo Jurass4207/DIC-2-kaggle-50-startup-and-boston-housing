@@ -1,11 +1,13 @@
 # DIC-2: Kaggle 50 Startups & Boston Housing 機器學習迴歸與特徵選取平台
 
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-2ea44f?style=flat&logo=github)](https://jurass4207.github.io/DIC-2-kaggle-50-startup-and-boston-housing/)
 [![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?style=flat&logo=vercel)](https://temporary-flying-breeze-08zhb2j.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 本專案為 **DIC-2 機器學習作業**，完整實作 **50 Startups** 與 **Boston Housing** 兩大經典資料集之多元線性迴歸分析、特徵工程，以及 **5 種特徵選取方法（Feature Selection Methods）** 的預測效能評估。
 
-- 🌐 **Vercel 線上運行 Demo**：[https://temporary-flying-breeze-08zhb2j.vercel.app](https://temporary-flying-breeze-08zhb2j.vercel.app)
+- 🌐 **GitHub Pages 線上展示網址**：[https://jurass4207.github.io/DIC-2-kaggle-50-startup-and-boston-housing/](https://jurass4207.github.io/DIC-2-kaggle-50-startup-and-boston-housing/)
+- 🌐 **備用 Vercel 網址**：[https://temporary-flying-breeze-08zhb2j.vercel.app](https://temporary-flying-breeze-08zhb2j.vercel.app)
 
 ---
 
